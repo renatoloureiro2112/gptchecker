@@ -20,7 +20,10 @@ def analyze_text(text: str):
         response = requests.post(API_URL, headers=HEADERS, json=payload)
         response.raise_for_status()
         data = response.json()
-        score = data["result"]["overall_score"]
-        return f"Texto é {score} IA"
+
+        # 🧪 Retornar a resposta da API para debug
+        return {"resposta_da_api": data}
+
     except Exception as e:
         return {"erro": str(e)}
+
