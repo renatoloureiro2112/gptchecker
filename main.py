@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
 import requests
 
@@ -19,25 +19,32 @@ HEADERS = {
 async def form():
     return """
         <html>
-            <head>
-                <title>Analisar Texto com IA</title>
-            </head>
+            <head><title>Análise de IA</title></head>
             <body>
-                <h2>Cole seu texto abaixo:</h2>
+                <h2>Cole o texto abaixo:</h2>
                 <form method="post">
-                    <textarea name="text" rows="20" cols="100"></textarea><br>
-                    <button type="submit">Analisar</button>
+                    <textarea name="text" rows="20" cols="100" required></textarea><br>
+                    <input type="submit" value="Analisar">
                 </form>
             </body>
         </html>
     """
 
-# Resultado da análise (POST)
+# Página de resultado (POST)
 @app.post("/", response_class=HTMLResponse)
 async def analisar(text: str = Form(...)):
+    if not text or len(text.strip()) < 20:
+        return """
+            <html><body>
+            <h2>Erro: texto vazio ou muito curto</h2>
+            <p>Verifique se o campo foi realmente preenchido.</p>
+            <a href="/">↩ Voltar</a>
+            </body></html>
+        """
+
     payload = {"input_text": text}
     try:
-        response = requests.post(API_URL, headers=HEADERS, json=payload)
+        response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=30)
         response.raise_for_status()
         data = response.json()
 
@@ -49,18 +56,23 @@ async def analisar(text: str = Form(...)):
                 <head><title>Resultado</title></head>
                 <body>
                     <h2>Resultado da Análise:</h2>
-                    <p>Seu texto foi <strong>{score_str}</strong> gerado por IA.</p>
+                    <p><strong>Seu texto foi {score_str} gerado por IA.</strong></p>
+                    <h3>Texto recebido:</h3>
+                    <pre>{text}</pre>
                     <br><a href="/">↩ Voltar</a>
                 </body>
             </html>
         """
-    except Exception as e:
+
+    except requests.exceptions.RequestException as e:
         return f"""
             <html>
+                <head><title>Erro</title></head>
                 <body>
-                    <h2>Erro</h2>
-                    <p>{str(e)}</p>
-                    <br><a href="/">↩ Voltar</a>
+                    <h2>Erro ao analisar o texto</h2>
+                    <p>Talvez o serviço tenha demorado demais para responder.</p>
+                    <p><code>{str(e)}</code></p>
+                    <a href="/">↩ Voltar</a>
                 </body>
             </html>
         """
