@@ -21,9 +21,11 @@ def analyze_text(text: str):
         response.raise_for_status()
         data = response.json()
 
-        # 🧪 Retornar a resposta da API para debug
-        return {"resposta_da_api": data}
+        # Extrair o percentual do campo 'is_gpt_generated'
+        score = data["result"]["is_gpt_generated"]
+        return f"Seu texto foi {score} gerado por IA."
 
     except Exception as e:
         return {"erro": str(e)}
+
 
